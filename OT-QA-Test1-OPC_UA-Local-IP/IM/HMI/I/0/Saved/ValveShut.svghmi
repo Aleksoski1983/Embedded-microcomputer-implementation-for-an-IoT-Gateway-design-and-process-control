@@ -1,0 +1,62 @@
+<!DOCTYPE svg PUBLIC "-//SIEMENS//DTD SVG 1.0 TIA-HMI//EN" "http://tia.siemens.com/graphics/svg/1.4/dtd/svg14-hmi.dtd">
+<!-- SIMATIC WINCC Copyright (C) Siemens AG 2017. All Rights Reserved. -->
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:hmi-bind--xlink="http://svg.siemens.com/hmi/bind/xlink/"
+     xmlns:hmi="http://svg.siemens.com/hmi/"
+     xmlns:hmi-bind="http://svg.siemens.com/hmi/bind/"
+     xmlns:hmi-element="http://svg.siemens.com/hmi/element/"
+     xmlns:hmi-feature="http://svg.siemens.com/hmi/feature/"
+     xmlns:hmi-event="http://svg.siemens.com/hmi/event/"
+     viewBox="0 0 67 300"
+     preserveAspectRatio="none">
+
+	<hmi:self type="widget" displayName="ValveShut" name="extended.ValveShut" version="1.0.1" performanceClass="L">
+		<hmi:paramDef name="BasicColor"         type="HmiColor"  default="0xFFEEEEEE"  />
+    </hmi:self>
+
+     <defs>
+       <hmi:localDef name="Color" type="HmiColor" hmi-bind:value="{{ParamProps.BasicColor}}"  />
+     </defs>
+  <g id="Handle">
+    <linearGradient id="Shape_1_" gradientUnits="userSpaceOnUse" x1="17.8071" y1="150.127" x2="49.1034" y2="150.127">
+      <stop offset="0" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.353))}}" />
+      <stop offset="4.758149e-02" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.290))}}" />
+      <stop offset="0.1509" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.173))}}" />
+      <stop offset="0.2395" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.102))}}" />
+      <stop offset="0.3025" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.075))}}" />
+      <stop offset="0.4074" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.090))}}" />
+      <stop offset="0.514" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.137))}}" />
+      <stop offset="0.6214" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.220))}}" />
+      <stop offset="0.7294" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.329))}}" />
+      <stop offset="0.8378" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.475))}}" />
+      <stop offset="0.9452" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.647))}}" />
+      <stop offset="1" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.749))}}" />
+    </linearGradient>
+    <path id="Shape" fill="url(#Shape_1_)" stroke="#8C8C91" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="M50,18.9c0-9.1-7.4-16.4-16.4-16.4S17.1,9.9,17.1,18.9v262.4c0,9.1,7.4,16.4,16.4,16.4S50,290.4,50,281.3V18.9z" />
+    <linearGradient id="Reflection_1_" gradientUnits="userSpaceOnUse" x1="19.9253" y1="150.1211" x2="23.2938" y2="150.1211">
+      <stop offset="0" stop-color="#F2F2F2" stop-opacity="0.4" />
+      <stop offset="1" stop-color="#F7F7F7" stop-opacity="0.7" />
+    </linearGradient>
+    <path id="Reflection" fill="url(#Reflection_1_)" d="M20.4,9.8v280.7c0,0,1.7,2.9,5.6,5c0-0.8,0-289.9,0-290.7   C22.1,6.9,20.4,9.8,20.4,9.8z" />
+  </g>
+  <linearGradient id="Centre_Axle_Connection_1_" gradientUnits="userSpaceOnUse" x1="-10.0371" y1="96.8804" x2="45.0578" y2="164.239">
+    <stop offset="0" stop-color="#575756" />
+    <stop offset="1.586480e-02" stop-color="#5D5C5C" />
+    <stop offset="0.1171" stop-color="#797878" />
+    <stop offset="0.2183" stop-color="#8D8D8C" />
+    <stop offset="0.3189" stop-color="#999998" />
+    <stop offset="0.4178" stop-color="#9D9D9C" />
+    <stop offset="0.5402" stop-color="#979696" />
+    <stop offset="0.7122" stop-color="#848484" />
+    <stop offset="0.9127" stop-color="#676666" />
+    <stop offset="1" stop-color="#575756" />
+  </linearGradient>
+  <circle id="Centre_Axle_Connection" fill="url(#Centre_Axle_Connection_1_)" stroke="#646567" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" cx="33.5" cy="150.1" r="31" />
+  <linearGradient id="Axle_1_" gradientUnits="userSpaceOnUse" x1="15.1221" y1="128.3413" x2="53.9896" y2="174.3788">
+    <stop offset="0" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.000))}}" />
+    <stop offset="1" hmi-bind:stop-color="{{Converter.RGBA(Converter.Darker(ParamProps.BasicColor, 0.516))}}" />
+  </linearGradient>
+  <circle id="Axle" fill="url(#Axle_1_)" stroke="#646567" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" cx="33.5" cy="150.1" r="15.4" />
+</svg>
