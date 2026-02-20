@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - IIoT Gateway{% endblock %}
+
+{% block content %}
+<div class="page-wrapper logs-page">
+    <div class="page-header">
+        <h2>📋 System Logs</h2>
+    </div>
+    
+    <div class="card">
+        <div class="log-controls">
+            <button id="refresh-logs-btn" class="btn btn-primary">Refresh</button>
+            <button id="clear-logs-btn" class="btn btn-secondary">Clear Display</button>
+            <label>
+                <input type="checkbox" id="auto-scroll" checked>
+                Auto-scroll
+            </label>
+        </div>
+
+        <div id="log-container" class="log-display">
+            <p class="loading">Loading logs...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/logs.js') }}"></script>
+{% endblock %}

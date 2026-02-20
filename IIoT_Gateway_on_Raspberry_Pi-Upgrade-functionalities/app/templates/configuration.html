@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - IIoT Gateway{% endblock %}
+
+{% block content %}
+<div class="page-wrapper configuration-page">
+    <div class="page-header">
+        <h2>⚙️ Gateway Configuration</h2>
+    </div>
+
+    <!-- MQTT Configuration -->
+    <div class="card config-section mapping-section">
+        <h3>⚙️ MQTT to OPC UA Mappings</h3>
+        <p class="help-text"><strong>Optional:</strong> Expose MQTT topics as OPC-UA variables (only needed if you want data in OPC-UA server)</p>
+        
+        <table id="mqtt-mappings-table">
+            <thead>
+                <tr>
+                    <th>MQTT Topic</th>
+                    <th>OPC UA Node</th>
+                    <th>JSON Key</th>
+                    <th>Data Type</th>
+                    <th>Unit</th>
+                    <th>Store to DB</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="mqtt-mappings-tbody">
+                <tr>
+                    <td colspan="7" style="text-align: center;">Loading mappings...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="info-box optional" style="margin-top: 15px;">
+            <strong>ℹ️ About OPC-UA Mappings:</strong><br>
+            Only create mappings here if you need to expose MQTT data as OPC-UA variables. You can subscribe to and monitor MQTT topics without any mappings.
+        </div>
+
+        <button id="add-mqtt-mapping-btn" class="btn btn-primary">Add MQTT Mapping</button>
+    </div>
+
+    <!-- MQTT Dynamic Subscriptions -->
+    <div class="card config-section subscription-section">
+        <h3>📡 MQTT Topic Subscriptions</h3>
+        <p class="help-text">Subscribe to MQTT topics to monitor messages and enable bridging (independent of OPC-UA mappings)</p>
+        
+        <div class="subscription-section">
+            <h4>Quick Subscribe</h4>
+            <div class="form-group" style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="subscribe-topic" placeholder="e.g., sensor/+/temperature or data/#" style="flex: 1; max-width: 400px;">
+                <select id="subscribe-qos" style="width: 100px;">
+                    <option value="0">QoS 0</option>
+                    <option value="1" selected>QoS 1</option>
+                    <option value="2">QoS 2</option>
+                </select>
+                <button id="subscribe-btn" class="btn btn-primary">Subscribe</button>
+            </div>
+            <div class="help-text" style="margin-top: 10px;">
+                <strong>Wildcards:</strong> Use <code>+</code> for single level (e.g., sensor/+/temp) or <code>#</code> for multi-level (e.g., data/#)
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h4>Active Subscriptions</h4>
+            <table id="subscriptions-table">
+                <thead>
+                    <tr>
+                        <th>Topic Pattern</th>
+                        <th>QoS</th>
+                        <th>Messages Received</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="subscriptions-tbody">
+                    <tr>
+                        <td colspan="4" style="text-align: center;">Loading subscriptions...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="info-box" style="margin-top: 20px; padding: 15px; background: #e8f5e9; border-left: 4px solid #4caf50;">
+            <strong>💡 How it works:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li>Subscribe to any topic to receive messages in real-time</li>
+                <li>View all messages in the <a href="/mqtt-monitor">MQTT Monitor</a> page</li>
+                <li>Create bridge rules below to forward/transform data</li>
+                <li>No OPC-UA mapping required - this is just for data monitoring and bridging</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- MQTT Message Bridging -->
+    <div class="card config-section bridging-section">
+        <h3>🌉 MQTT Message Bridging</h3>
+        <p class="help-text">Forward and transform messages between topics (works with any subscribed topic). For OPC-UA write targets use <code>opcua:&lt;node_id&gt;</code> or <code>opcua_browse:&lt;browse_name&gt;</code>.</p>
+        
+        <div class="form-group">
+            <label>Source Topic:</label>
+            <input type="text" id="bridge-source" placeholder="e.g., device/sensor1/temp" style="width: 45%;">
+            <span style="margin: 0 10px;">→</span>
+            <label>Target Topic:</label>
+            <input type="text" id="bridge-target" placeholder="e.g., processed/temperature OR opcua_browse:OutdoorTemp_GT10_01" style="width: 45%;">
+        </div>
+        
+        <div class="form-group">
+            <label>Transform (optional):</label>
+            <select id="bridge-transform" style="width: 200px;">
+                <option value="">None</option>
+                <option value="json_extract">Extract JSON Field</option>
+                <option value="multiply">Multiply by Factor</option>
+                <option value="prefix">Add Prefix</option>
+            </select>
+            <input type="text" id="transform-param" placeholder="Parameter" style="width: 150px; margin-left: 10px; display: none;">
+        </div>
+        
+        <button id="add-bridge-btn" class="btn btn-primary">Add Bridge Rule</button>
+        
+        <table id="bridge-rules-table" style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th>Source → Target</th>
+                    <th>Messages</th>
+                    <th>Last Activity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="bridge-rules-tbody">
+                <tr>
+                    <td colspan="4" style="text-align: center;">Loading bridge rules...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="card">
+        <h3>System Configuration</h3>
+        <div class="config-grid">
+            <div class="config-item">
+                <label>MQTT Broker:</label>
+                <span id="config-mqtt-broker">Loading...</span>
+            </div>
+            <div class="config-item">
+                <label>PostgreSQL Database:</label>
+                <span id="config-postgresql">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPC UA Client Configuration -->
+    <div class="card">
+        <h3>OPC UA Client Settings (S7-1500 Connection)</h3>
+        <p class="help-text">Configure connection to external OPC UA Server</p>
+        
+        <div class="form-group">
+            <label>Client Endpoint:</label>
+            <input type="text" id="opcua-client-endpoint" placeholder="opc.tcp://192.168.1.100:4840" style="width: 100%;">
+            <small>Enter your S7-1500 PLC IP address and port (usually 4840)</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Current Endpoint:</label>
+            <span id="config-opcua-client" class="endpoint-display">Loading...</span>
+        </div>
+        
+        <div class="form-group">
+            <label>Security Policy:</label>
+            <select id="security-policy" class="form-control">
+                <option value="None">None</option>
+                <option value="Basic256">Basic256</option>
+                <option value="Basic256Sha256">Basic256Sha256</option>
+                <option value="Aes128_Sha256_RsaOaep">Aes128_Sha256_RsaOaep</option>
+            </select>
+            <small>For S7-1500, typically use "None"</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Security Mode:</label>
+            <select id="security-mode" class="form-control">
+                <option value="None">None</option>
+                <option value="Sign">Sign</option>
+                <option value="SignAndEncrypt">Sign and Encrypt</option>
+            </select>
+            <small>For S7-1500, typically use "None"</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Connection Timeout (seconds):</label>
+            <input type="number" id="connection-timeout" min="5" max="300" value="10" class="form-control" style="width: 150px;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Connection Status:</label>
+            <span id="opcua-connection-status" class="badge badge-secondary">Disconnected</span>
+        </div>
+        
+        <div class="button-group" style="margin-top: 15px;">
+            <button id="test-connection-btn" class="btn btn-info">🔍 Test Connection</button>
+            <button id="save-opcua-client-btn" class="btn btn-primary">💾 Save & Reconnect</button>
+            <button id="disconnect-btn" class="btn btn-warning">🔌 Disconnect</button>
+            <button id="connect-btn" class="btn btn-success">🔌 Connect</button>
+        </div>
+    </div>
+
+    <!-- MQTT Broker Configuration -->
+    <div class="card">
+        <h3>MQTT Broker Settings</h3>
+        <p class="help-text">Configure connection to Mosquitto MQTT broker</p>
+        
+        <div class="form-group">
+            <label>Broker Address:</label>
+            <input type="text" id="mqtt-broker-address" placeholder="localhost" style="width: 60%;" autocomplete="off">
+        </div>
+        
+        <div class="form-group">
+            <label>Port:</label>
+            <input type="number" id="mqtt-port" value="1883" min="1" max="65535" style="width: 100px;">
+        </div>
+        
+        <div class="form-group">
+            <label>Username (optional):</label>
+            <input type="text" id="mqtt-username" placeholder="Leave empty for anonymous" style="width: 60%;">
+        </div>
+        
+        <div class="form-group">
+            <label>Password (optional):</label>
+            <input type="password" id="mqtt-password" placeholder="Leave empty for anonymous" style="width: 60%;">
+        </div>
+        
+        <div class="form-group">
+            <label>Connection Status:</label>
+            <span id="mqtt-connection-status" class="badge badge-secondary">Disconnected</span>
+        </div>
+        
+        <button id="test-mqtt-btn" class="btn btn-info">Test Connection</button>
+        <button id="save-mqtt-btn" class="btn btn-primary">Save Configuration</button>
+        <button id="connect-mqtt-btn" class="btn btn-success" style="display:none;">Connect</button>
+        <button id="disconnect-mqtt-btn" class="btn btn-warning" style="display:none;">Disconnect</button>
+    </div>
+
+    <!-- Database Configuration -->
+    <div class="card">
+        <h3>PostgreSQL Database Settings</h3>
+        <p class="help-text">Configure PostgreSQL connection for time-series sensor data</p>
+        
+        <div class="form-group">
+                <label>Host:</label>
+                <input type="text" id="postgres-host" placeholder="localhost" style="width: 40%;">
+            </div>
+            <div class="form-group">
+                <label>Port:</label>
+                <input type="number" id="postgres-port" placeholder="5432" style="width: 20%;">
+            </div>
+            <div class="form-group">
+                <label>Database:</label>
+                <input type="text" id="postgres-db" placeholder="iiot_gateway" style="width: 40%;">
+            </div>
+            <div class="form-group">
+                <label>User:</label>
+                <input type="text" id="postgres-user" placeholder="iiot_user" style="width: 40%;">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="postgres-password" placeholder="Password" style="width: 40%;">
+            </div>
+            <div class="form-group">
+                <label>Status:</label>
+                <span id="postgres-status" class="badge badge-secondary">Checking...</span>
+            </div>
+        </div>
+        
+        <div class="button-group" style="margin-top: 15px;">
+            <button id="test-db-btn" class="btn btn-info">🔍 Test Connection</button>
+            <button id="connect-db-btn" class="btn btn-success">🔌 Connect</button>
+            <button id="disconnect-db-btn" class="btn btn-warning">🔌 Disconnect</button>
+            <button id="save-db-btn" class="btn btn-primary">💾 Save Configuration</button>
+            <button id="init-db-btn" class="btn btn-secondary">⚙️ Initialize Tables</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Adding MQTT Mapping -->
+<div id="mqtt-mapping-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Add MQTT to OPC UA Mapping</h3>
+        <form id="add-mqtt-mapping-form">
+            <div class="form-group">
+                <label>MQTT Topic:</label>
+                <input type="text" id="mqtt-topic" placeholder="e.g., pico/temperature" required>
+            </div>
+            <div class="form-group">
+                <label>OPC UA Browse Name:</label>
+                <input type="text" id="opcua-browse-name" placeholder="e.g., PicoTemperature" required>
+            </div>
+            <div class="form-group">
+                <label>OPC UA Node ID (for PLC write):</label>
+                <input type="text" id="opcua-node-id" placeholder='e.g., ns=3;s="FB_AHU_5703_DB"."Variable"'>
+                <small style="display: block; color: #666; margin-top: 5px;">
+                    Required for writing to PLC variables. Leave empty for gateway's OPC-UA server.
+                </small>
+            </div>
+            <div class="form-group">
+                <label>JSON Key / Path (optional):</label>
+                <input type="text" id="json-key" placeholder="e.g., temperature or data.temp" value="value">
+                <small style="display: block; color: #666; margin-top: 5px;">
+                    If MQTT payload is JSON, set the field to extract. Use dot-paths (e.g., <code>data.temp</code>).
+                    If payload is a plain number/string, keep <code>value</code>.
+                </small>
+            </div>
+            <div class="form-group">
+                <label>Data Type:</label>
+                <select id="data-type">
+                    <option value="Double">Double</option>
+                    <option value="Int">Integer</option>
+                    <option value="String">String</option>
+                    <option value="Boolean">Boolean</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Unit (optional):</label>
+                <input type="text" id="unit" placeholder="e.g., °C">
+            </div>
+            <div class="form-group">
+                <label>Measurement Name:</label>
+                <input type="text" id="measurement-name" placeholder="e.g., temperature">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="store-to-db" checked>
+                    Store to PostgreSQL
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Create Mapping</button>
+                <button type="button" class="btn btn-secondary close">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/configuration.js') }}?v=16"></script>
+{% endblock %}
