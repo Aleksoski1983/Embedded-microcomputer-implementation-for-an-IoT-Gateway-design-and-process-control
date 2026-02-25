@@ -1,7 +1,0 @@
-Supply fan              18.5 kW
-Exhaust fan             15.0 kW
-Heat Recovery motor      5.5 kW
-Pump                     2.2 kW
-Heating Valve            1.5 kW
------------------------------------
-TOTAL ≈                 42.7 kW
