@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<DownloadTask xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ProjectInfo ProjectId="a9406a64-129d-4b63-a7ba-92fe9fd37541" ESProjectName="OT-QA-Test1-OPC_UA-Local-IP" ESDeviceName="HMI_RT_1" RtProjectFolderName="OT-QA-Test1-OPC_UA-Local-IP.PC-System_1[SIMATIC PC station - WinCC Unified PC RT]" RtProjectName="OT-QA-Test1-OPC_UA-Local-IP.PC-System_1[SIMATIC PC station - WinCC Unified PC RT]" DeviceType="SIMATIC PC station - WinCC Unified PC RT" DeviceVersion="17.0.0.0" CreationTime="11/09/2025 11:55:26" FirmwareFileName="" RuntimeFileName="" PRCV="3.0.0.0" RTCV="0.0.0.0" RTReleaseNo="17.0.0.0" ImageReleaseNo="0.0.0.0" />
+  <FullDownload>Arrow90Left.svghmi</FullDownload>
+  <FullDownload>Arrow90Right.svghmi</FullDownload>
+  <FullDownload>BatchOven.svghmi</FullDownload>
+  <FullDownload>EvaporatorStandard.svghmi</FullDownload>
+  <FullDownload>FlangeWithoutBoltsHorizontal.svghmi</FullDownload>
+  <FullDownload>HorizontalSplitCasePump.svghmi</FullDownload>
+  <FullDownload>MagneticFlowMeter1.svghmi</FullDownload>
+  <FullDownload>PressureGuage.svghmi</FullDownload>
+  <FullDownload>TemeratureSensorVertical.svghmi</FullDownload>
+  <FullDownload type="ADMINDATA">UMCData.json</FullDownload>
+  <FullDownload>User.pbb</FullDownload>
+  <FullDownload>ValveShut.svghmi</FullDownload>
+  <FullDownload>{894AD6A7-6155-424B-AA9D-7E77FD174D24}.zip</FullDownload>
+  <FullDownload>{9BA2ACF0-39B3-465B-8E10-28301ED605C5}.zip</FullDownload>
+  <FullDownload>config\config.level</FullDownload>
+  <FullDownload>fonts\SISAN03.ttf</FullDownload>
+  <FullDownload>fonts\SISAN03.woff2</FullDownload>
+  <FullDownload>general\cds.rdf</FullDownload>
+  <FullDownload>general\ChromIdentification.rdf</FullDownload>
+  <FullDownload>general\config_AlertClass.rdf</FullDownload>
+  <FullDownload>general\config_AlertHandler.rdf</FullDownload>
+  <FullDownload>general\config_DistributionInfo.rdf</FullDownload>
+  <FullDownload>general\config_DpValue.rdf</FullDownload>
+  <FullDownload>general\config_HmiRuntime.rdf</FullDownload>
+  <FullDownload>general\config_InitialValue.rdf</FullDownload>
+  <FullDownload>general\config_LicenseCounter.rdf</FullDownload>
+  <FullDownload>general\config_PeripheralAddress.rdf</FullDownload>
+  <FullDownload>general\config_SecureConnectionAttributes.rdf</FullDownload>
+  <FullDownload>general\config_Smoothing.rdf</FullDownload>
+  <FullDownload>general\dpIdentification.rdf</FullDownload>
+  <FullDownload>general\fontLocatorList.rdf</FullDownload>
+  <FullDownload>general\main.rdf</FullDownload>
+  <FullDownload>general\style_172.rdf</FullDownload>
+  <FullDownload>general\style_24.rdf</FullDownload>
+  <FullDownload>general\style_96.rdf</FullDownload>
+  <FullDownload>general\SystemDiagnosticsDnnData.rdf</FullDownload>
+  <FullDownload>general\textLibrary_175_1033.rdf</FullDownload>
+  <FullDownload>general\textLibrary_94_1033.rdf</FullDownload>
+  <FullDownload>general\textListLibrary.rdf</FullDownload>
+  <FullDownload>graphics\imageLibrary_1033.rdf</FullDownload>
+  <FullDownload>screens\screen_198.rdf</FullDownload>
+  <FullDownload>screens\screen_210.rdf</FullDownload>
+  <FullDownload>system\ProjectCharacteristics.rdf</FullDownload>
+</DownloadTask>
