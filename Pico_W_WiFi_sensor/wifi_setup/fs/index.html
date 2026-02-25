@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pico W Sensor Dashboard</title>
+  <script>
+    // In AP setup mode the device runs at 192.168.0.1 and serves the config portal at /setup.shtml.
+    // Redirect there automatically so users don't land on the run-mode dashboard.
+    if (location.hostname === "192.168.0.1") {
+      location.replace("/setup.shtml");
+    }
+  </script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/setup.shtml" />
+  </noscript>
+  <style>
+    :root { --bg:#0b1220; --card:#111b31; --text:#e7eefc; --muted:#9db2d8; --ok:#2bd576; --bad:#ff5a73; --warn:#ffcc66; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
+    .row { display:flex; gap:14px; flex-wrap:wrap; }
+    .card { background:var(--card); border:1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 14px; flex:1; min-width: 260px; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    h2 { font-size: 14px; margin: 0 0 10px; color: var(--muted); font-weight: 600; }
+    .kv { display:grid; grid-template-columns: 160px 1fr; row-gap: 6px; column-gap: 10px; font-size: 14px; }
+    .k { color: var(--muted); }
+    .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border:1px solid rgba(255,255,255,0.12); }
+    .ok { background: rgba(43,213,118,0.12); color: var(--ok); }
+    .bad { background: rgba(255,90,115,0.12); color: var(--bad); }
+    .warn { background: rgba(255,204,102,0.12); color: var(--warn); }
+    .muted { color: var(--muted); }
+    input[type="text"] { width: 100%; box-sizing: border-box; padding: 10px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.15); color: var(--text); }
+    label { display:block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+    .btn { appearance:none; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: var(--text); padding: 10px 12px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: rgba(255,255,255,0.12); }
+    .btn.primary { background: rgba(43,213,118,0.12); border-color: rgba(43,213,118,0.35); }
+    .btn.primary:hover { background: rgba(43,213,118,0.18); }
+    .foot { margin-top: 12px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Pico W WiFi Sensor</h1>
+
+    <div class="row">
+      <div class="card">
+        <h2>Status</h2>
+        <div class="kv">
+          <div class="k">Uptime</div><div id="uptime">--</div>
+          <div class="k">Device IP</div><div id="ip">--</div>
+          <div class="k">Temperature</div><div id="temp">--</div>
+          <div class="k">Humidity</div><div id="hum">--</div>
+          <div class="k">MQTT</div><div id="mqttStatus">--</div>
+        </div>
+        <div class="foot">Auto-refresh every 2 seconds.</div>
+      </div>
+
+      <div class="card">
+        <h2>MQTT Config (reboots on save)</h2>
+
+        <label>
+          <input id="mqttEnabled" type="checkbox" />
+          <span class="muted">Enable MQTT</span>
+        </label>
+
+        <label for="broker">Broker IP</label>
+        <input id="broker" type="text" placeholder="192.168.100.52" />
+
+        <label for="topic">Topic</label>
+        <input id="topic" type="text" placeholder="DHT22" />
+
+        <div style="margin-top: 12px; display:flex; gap: 10px; align-items:center;">
+          <button id="save" class="btn primary">Save MQTT Settings</button>
+          <span id="saveMsg" class="muted"></span>
+        </div>
+
+        <div class="foot">
+          WiFi credentials and static IP are changed only in setup mode.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Saved - Pico W Setup</title>
+    <style>
+        :root { --bg:#0b1220; --card:#111b31; --text:#e7eefc; --muted:#9db2d8; --ok:#2bd576; --bad:#ff5a73; --warn:#ffcc66; }
+        body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+        .wrap { max-width: 720px; margin: 0 auto; padding: 18px; min-height: 100vh; display:flex; align-items:center; }
+        .card { width: 100%; background:var(--card); border:1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px; }
+        h1 { font-size: 18px; margin: 0 0 10px; }
+        .muted { color: var(--muted); }
+        .ok { color: var(--ok); }
+        .note { margin-top: 12px; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04); }
+        .kv { display:grid; grid-template-columns: 160px 1fr; row-gap: 6px; column-gap: 10px; font-size: 14px; margin-top: 10px; }
+        .k { color: var(--muted); }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h1><span class="ok">Saved.</span> Rebooting now…</h1>
+            <div class="muted">The setup access point will disconnect as the device restarts.</div>
+
+            <div class="note">
+                <div class="kv">
+                    <div class="k">Next</div><div>Reconnect to your normal WiFi network</div>
+                    <div class="k">Then</div><div>Open the dashboard at the Pico W IP address</div>
+                    <div class="k">If it fails</div><div>Hold GPIO22 to GND during boot to re-enter setup</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

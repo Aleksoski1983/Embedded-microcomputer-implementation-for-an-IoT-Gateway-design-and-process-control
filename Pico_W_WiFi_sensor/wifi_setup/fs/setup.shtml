@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pico W Setup</title>
+    <style>
+        :root { --bg:#0b1220; --card:#111b31; --text:#e7eefc; --muted:#9db2d8; --ok:#2bd576; --bad:#ff5a73; --warn:#ffcc66; }
+        body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
+        .row { display:flex; gap:14px; flex-wrap:wrap; }
+        .card { background:var(--card); border:1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 14px; flex:1; min-width: 260px; }
+        h1 { font-size: 18px; margin: 0 0 12px; }
+        h2 { font-size: 14px; margin: 0 0 10px; color: var(--muted); font-weight: 600; }
+        .kv { display:grid; grid-template-columns: 160px 1fr; row-gap: 6px; column-gap: 10px; font-size: 14px; }
+        .k { color: var(--muted); }
+        .muted { color: var(--muted); }
+        input[type="text"], input[type="password"] { width: 100%; box-sizing: border-box; padding: 10px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.15); color: var(--text); }
+        label { display:block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+        .btn { appearance:none; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: var(--text); padding: 10px 12px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn:hover { background: rgba(255,255,255,0.12); }
+        .btn.primary { background: rgba(43,213,118,0.12); border-color: rgba(43,213,118,0.35); }
+        .btn.primary:hover { background: rgba(43,213,118,0.18); }
+        .foot { margin-top: 12px; font-size: 12px; color: var(--muted); }
+        .hint { margin-top: 10px; font-size: 12px; color: var(--muted); }
+        .section { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>Pico W WiFi Setup</h1>
+
+        <div class="row">
+            <div class="card">
+                <h2>Device</h2>
+                <div class="kv">
+                    <div class="k">Setup IP</div><div>192.168.0.1</div>
+                    <div class="k">Mode</div><div>Access Point (setup)</div>
+                </div>
+                <div class="foot">After saving, the device restarts and joins your WiFi.</div>
+            </div>
+
+            <div class="card">
+                <h2>Configuration</h2>
+                <form id="setupForm" action="/setup.cgi" method="get">
+                    <label for="ssid">WiFi Network (SSID) *</label>
+                    <input id="ssid" name="ssid" type="text" value="<!--#SSID-->" placeholder="Your WiFi name" required />
+
+                    <label for="passwd">WiFi Password *</label>
+                    <input id="passwd" name="passwd" type="password" value="<!--#PASSWD-->" placeholder="Your WiFi password" required />
+
+                    <div class="section">
+                        <h2>Network Settings (Optional)</h2>
+                        <div class="hint" style="margin-top: 0; margin-bottom: 12px;">Leave empty to use DHCP (automatic)</div>
+
+                        <label for="ipaddr">IP Address</label>
+                        <input id="ipaddr" name="ipaddr" type="text" placeholder="e.g., 192.168.1.100" pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" />
+
+                        <label for="netmask">Netmask</label>
+                        <input id="netmask" name="netmask" type="text" placeholder="e.g., 255.255.255.0" pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" />
+
+                        <label for="gateway">Gateway</label>
+                        <input id="gateway" name="gateway" type="text" placeholder="e.g., 192.168.1.1" pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" />
+                    </div>
+
+                    <div style="margin-top: 16px; display:flex; gap: 10px; align-items:center;">
+                        <button id="save" class="btn primary" type="submit">Save &amp; Restart</button>
+                        <span id="msg" class="muted"></span>
+                    </div>
+
+                    <div class="hint">Tip: If you can't reach the device later, hold GPIO22 to GND during boot to re-enter setup mode.</div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var form = document.getElementById('setupForm');
+            var btn = document.getElementById('save');
+            var msg = document.getElementById('msg');
+            if (!form || !btn || !msg) return;
+
+            // Load existing IP values if available - SSI tags will be replaced by server
+            var b0='<!--#B0-->',b1='<!--#B1-->',b2='<!--#B2-->',b3='<!--#B3-->';
+            var b4='<!--#B4-->',b5='<!--#B5-->',b6='<!--#B6-->',b7='<!--#B7-->';
+            var b8='<!--#B8-->',b9='<!--#B9-->',b10='<!--#B10-->',b11='<!--#B11-->';
+            
+            if (b0||b1||b2||b3) {
+                document.getElementById('ipaddr').value = b0+'.'+b1+'.'+b2+'.'+b3;
+            }
+            if (b4||b5||b6||b7) {
+                document.getElementById('netmask').value = b4+'.'+b5+'.'+b6+'.'+b7;
+            }
+            if (b8||b9||b10||b11) {
+                document.getElementById('gateway').value = b8+'.'+b9+'.'+b10+'.'+b11;
+            }
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                
+                // Build query string
+                var params = new URLSearchParams();
+                params.append('ssid', document.getElementById('ssid').value);
+                params.append('passwd', document.getElementById('passwd').value);
+                
+                // Parse and add IP address if provided
+                var ipaddr = document.getElementById('ipaddr').value;
+                if (ipaddr) {
+                    var ipParts = ipaddr.split('.');
+                    if (ipParts.length === 4) {
+                        params.append('B0', ipParts[0]);
+                        params.append('B1', ipParts[1]);
+                        params.append('B2', ipParts[2]);
+                        params.append('B3', ipParts[3]);
+                    }
+                }
+                
+                // Parse and add netmask if provided
+                var netmask = document.getElementById('netmask').value;
+                if (netmask) {
+                    var maskParts = netmask.split('.');
+                    if (maskParts.length === 4) {
+                        params.append('B4', maskParts[0]);
+                        params.append('B5', maskParts[1]);
+                        params.append('B6', maskParts[2]);
+                        params.append('B7', maskParts[3]);
+                    }
+                }
+                
+                // Parse and add gateway if provided
+                var gateway = document.getElementById('gateway').value;
+                if (gateway) {
+                    var gwParts = gateway.split('.');
+                    if (gwParts.length === 4) {
+                        params.append('B8', gwParts[0]);
+                        params.append('B9', gwParts[1]);
+                        params.append('B10', gwParts[2]);
+                        params.append('B11', gwParts[3]);
+                    }
+                }
+                
+                btn.disabled = true;
+                msg.textContent = 'Saving… device will restart.';
+                
+                // Submit to CGI handler
+                window.location.href = '/setup.cgi?' + params.toString();
+            });
+        })();
+    </script>
+</body>
+</html>
