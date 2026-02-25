@@ -1,0 +1,23 @@
+[Unit]
+Description=IIoT Gateway Service
+After=network.target network-online.target mosquitto.service influxdb.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/iiot-gateway
+Environment="PATH=/home/pi/iiot-gateway/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/pi/iiot-gateway/venv/bin/python /home/pi/iiot-gateway/run.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

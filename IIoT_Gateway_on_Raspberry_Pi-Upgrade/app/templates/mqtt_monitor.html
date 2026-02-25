@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}MQTT Messages - IIoT Gateway{% endblock %}
+
+{% block content %}
+<div class="page-wrapper mqtt-monitor-page">
+    <div class="page-header">
+        <h2>📡 MQTT Message Monitor</h2>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="total-messages">0</div>
+            <div class="stat-label">Total Messages</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="messages-per-sec">0</div>
+            <div class="stat-label">Messages/sec</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="unique-topics">0</div>
+            <div class="stat-label">Unique Topics</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="active-subscriptions">0</div>
+            <div class="stat-label">Subscriptions</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card">
+        <div class="message-controls">
+            <button id="pause-btn" class="btn btn-warning">⏸️ Pause</button>
+            <button id="clear-btn" class="btn btn-secondary">🗑️ Clear</button>
+            <label>
+                <input type="checkbox" id="auto-scroll" checked>
+                Auto-scroll
+            </label>
+            <label style="margin-left: 20px;">
+                <input type="checkbox" id="show-timestamps" checked>
+                Show Timestamps
+            </label>
+            <label style="margin-left: 20px;">
+                Filter Topic:
+                <input type="text" id="topic-filter" placeholder="e.g., sensor/+" style="width: 200px;">
+            </label>
+            <span style="margin-left: 20px; color: #7f8c8d;">
+                Max Display: <span id="buffer-size">100</span> messages
+            </span>
+        </div>
+    </div>
+
+    <!-- Message Display -->
+    <div class="card">
+        <h3>Live Messages</h3>
+        <div id="message-container" class="message-display">
+            <div class="no-messages">
+                <p>📡 Waiting for MQTT messages...</p>
+                <p class="help-text">Subscribe to topics in <a href="/configuration">Configuration</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Topic Breakdown -->
+    <div class="card">
+        <h3>Topic Breakdown</h3>
+        <table id="topic-table">
+            <thead>
+                <tr>
+                    <th>Topic</th>
+                    <th>Message Count</th>
+                    <th>Last Message</th>
+                    <th>Last Payload</th>
+                </tr>
+            </thead>
+            <tbody id="topic-tbody">
+                <tr>
+                    <td colspan="4" style="text-align: center;">No messages received yet</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/mqtt_monitor.js') }}"></script>
+{% endblock %}

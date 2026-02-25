@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>{% block title %}IIoT Gateway{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>IIoT Gateway</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="{% if request.endpoint == 'main.index' %}active{% endif %}">Dashboard</a></li>
+                <li><a href="/variables" class="{% if request.endpoint == 'main.variables' %}active{% endif %}">OPC-UA Variables</a></li>
+                <li><a href="/mqtt-monitor" class="{% if request.endpoint == 'main.mqtt_monitor' %}active{% endif %}">MQTT Monitor</a></li>
+                <li><a href="/configuration" class="{% if request.endpoint == 'main.configuration' %}active{% endif %}">Configuration</a></li>
+                <li><a href="/logs" class="{% if request.endpoint == 'main.logs' %}active{% endif %}">Logs</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 IIoT Gateway - Raspberry Pi 5</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=16"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

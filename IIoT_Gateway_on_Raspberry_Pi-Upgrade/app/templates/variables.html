@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Variables - IIoT Gateway{% endblock %}
+
+{% block content %}
+<div class="variables-page">
+    <div class="page-header">
+        <h2>📊 OPC UA Variable Management</h2>
+    </div>
+    
+    <!-- Connection Status Card -->
+    <div class="card connection-status-card">
+        <div class="status-row">
+            <div class="status-item">
+                <span class="status-label">OPC UA Server:</span>
+                <span id="opcua-connection-status" class="status-badge disconnected">Disconnected</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Monitored Variables:</span>
+                <span id="monitored-count" class="count-badge">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Active Logging:</span>
+                <span id="logging-count" class="count-badge">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Monitoring Loop:</span>
+                <span id="monitoring-status" class="status-badge disconnected">Stopped</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button id="browse-simple-btn" class="btn btn-primary">🔍 Browse Variables</button>
+        <button id="add-manual-btn" class="btn btn-success">➕ Add Manually</button>
+        <button id="view-namespaces-btn" class="btn btn-info">📋 Namespaces</button>
+        <button id="refresh-btn" class="btn btn-secondary">🔄 Refresh</button>
+        <span id="browse-status" class="status-message"></span>
+    </div>
+
+    <div class="variables-container">
+        <!-- Left Panel: OPC UA Tree Browser -->
+        <div class="card tree-panel">
+            <h3>Available Variables</h3>
+            <p class="help-text">
+                <strong>Simple Browse:</strong> Quick browse of server variables<br>
+                <strong>Add Manually:</strong> Add variables by node ID if you know them<br>
+                <strong>View Namespaces:</strong> See available namespaces for manual entry
+            </p>
+            <div id="opcua-tree" class="tree-view">
+                <p class="loading">Click "Simple Browse" to load available variables...</p>
+            </div>
+        </div>
+
+        <!-- Right Panel: Selected Variables -->
+        <div class="card selected-panel">
+            <div class="panel-header">
+                <h3>📈 Monitored Variables</h3>
+                <button id="reload-selected-btn" class="btn btn-sm">🔄 Reload</button>
+            </div>
+            <div class="table-container">
+                <table id="selected-variables-table" class="variables-table">
+                    <thead>
+                        <tr>
+                            <th>Variable Name</th>
+                            <th>Current Value</th>
+                            <th>Type</th>
+                            <th>💾 DB</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="selected-tbody">
+                        <tr>
+                            <td colspan="6" class="empty-state">No variables monitored yet. Browse and add variables from the left panel.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Variable Details -->
+<div id="variable-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Add Variable to Monitoring</h3>
+        <form id="add-variable-form">
+            <div class="form-group">
+                <label>Node ID:</label>
+                <input type="text" id="modal-node-id" readonly>
+            </div>
+            <div class="form-group">
+                <label>Browse Name:</label>
+                <input type="text" id="modal-browse-name" readonly>
+            </div>
+            <div class="form-group">
+                <label>Display Name:</label>
+                <input type="text" id="modal-display-name">
+            </div>
+            <div class="form-group">
+                <label>Measurement Name:</label>
+                <input type="text" id="modal-measurement-name" placeholder="e.g., temperature">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="modal-store-db" checked>
+                    Store to PostgreSQL
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Add Variable</button>
+                <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal for Manual Variable Addition -->
+<div id="manual-variable-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Add Variable Manually</h3>
+        <form id="manual-variable-form">
+            <div class="form-group">
+                <label>Node ID:</label>
+                <input type="text" id="manual-node-id" placeholder="e.g., ns=3;s=&quot;DB1&quot;.Temperature" required>
+                <small>Common formats: ns=3;s="DB1".Variable or i=1234</small>
+            </div>
+            <div class="form-group">
+                <label>Variable Name:</label>
+                <input type="text" id="manual-variable-name" placeholder="e.g., Temperature" required>
+            </div>
+            <div class="form-group">
+                <label>Description:</label>
+                <input type="text" id="manual-description" placeholder="e.g., Tank temperature sensor">
+            </div>
+            <div class="form-group">
+                <label>Data Type:</label>
+                <select id="manual-data-type">
+                    <option value="float">Float</option>
+                    <option value="int">Integer</option>
+                    <option value="boolean">Boolean</option>
+                    <option value="string">String</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Unit:</label>
+                <input type="text" id="manual-unit" placeholder="e.g., °C, %, bar">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="manual-writable">
+                    Writable (can send values to PLC)
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="manual-store-db" checked>
+                    Store to PostgreSQL
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Add Variable</button>
+                <button type="button" class="btn btn-secondary" id="manual-cancel">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/variables.js') }}?v=8"></script>
+{% endblock %}
