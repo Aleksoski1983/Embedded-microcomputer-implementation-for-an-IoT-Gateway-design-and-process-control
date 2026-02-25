@@ -1,0 +1,661 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "kwatth"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n    SUM(latest.value) AS total_active_energy,\r\n    MAX(latest.unit) AS unit\r\nFROM (\r\n    SELECT DISTINCT ON (s.devicename)\r\n        s.devicename,\r\n        d.value,\r\n        q.unit\r\n    FROM datalog2 d\r\n    JOIN sources s ON d.sourceid = s.sourceid\r\n    JOIN quantities q ON d.quantityid = q.quantityid\r\n    WHERE q.quantityname = 'Active_Energy_Delivered'\r\n      AND s.devicename IN (\r\n         'Supply Fan',\r\n         'Exhaust Fan',\r\n         'Heat Recovery Motor',\r\n         'Pump',\r\n         'Heating Valve'\r\n      )\r\n    ORDER BY s.devicename, d.timestamputc DESC\r\n) latest;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Total Active Energy Delivered",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-orange",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "kwatt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n    SUM(latest.value) AS total_active_power,\r\n    MAX(latest.unit) AS unit\r\nFROM (\r\n    SELECT DISTINCT ON (s.devicename)\r\n        s.devicename,\r\n        d.value,\r\n        q.unit\r\n    FROM datalog2 d\r\n    JOIN sources s ON d.sourceid = s.sourceid\r\n    JOIN quantities q ON d.quantityid = q.quantityid\r\n    WHERE q.quantityname = 'Active_Power_Total'\r\n      AND s.devicename IN (\r\n          'Supply Fan',\r\n          'Exhaust Fan',\r\n          'Heat Recovery Motor',\r\n          'Pump',\r\n          'Heating Valve'\r\n      )\r\n    ORDER BY s.devicename, d.timestamputc DESC\r\n) latest;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Total Active Power",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "Hz"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n  d.timestamputc AS time,\r\n  d.value        AS frequency\r\nFROM datalog2 d\r\nJOIN quantities q ON d.quantityid = q.quantityid\r\nWHERE q.quantityname = 'Frequency'\r\n  AND $__timeFilter(d.timestamputc)\r\nORDER BY d.timestamputc DESC\r\nLIMIT 1;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "System frequency",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-YlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "\r\nSELECT\r\n    $__timeGroup(d.timestamputc, $__interval) AS \"time\",\r\n    s.devicename                              AS \"Consumer\",\r\n\r\n    -- Peak values per bucket (max)\r\n    ROUND(MAX(CASE WHEN q.quantityname = 'Peak_Active_Demand' THEN d.value END)::numeric, 3) AS \"Peak Active Demand\",\r\n    ROUND(MAX(CASE WHEN q.quantityname = 'Peak_Reactive_Demand' THEN d.value END)::numeric, 3) AS \"Peak Reactive Demand\"\r\n\r\nFROM datalog2 d\r\nJOIN sources s    ON d.sourceid   = s.sourceid\r\nJOIN quantities q ON d.quantityid = q.quantityid\r\nWHERE\r\n    q.quantityname IN ('Peak_Active_Demand', 'Peak_Reactive_Demand')\r\n    AND $__timeFilter(d.timestamputc)\r\n\r\n    -- Optional Grafana device filter:\r\n    -- AND (${consumer:csv} OR s.devicename IN ('Supply Fan','Exhaust Fan','Heat Recovery Motor','Pump','Heating Valve'))\r\n\r\nGROUP BY 1, 2\r\nORDER BY 1, 2;\r\n\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Peak Demands",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              },
+              {
+                "color": "#EAB839",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 10,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n    s.devicename AS \"Device\",\r\n    d.value      AS \"Power Factor\",\r\n    d.timestamputc AS \"Timestamp\"\r\nFROM datalog2 d\r\nJOIN sources s    ON d.sourceid   = s.sourceid\r\nJOIN quantities q ON d.quantityid = q.quantityid\r\nWHERE\r\n    q.quantityname = 'Power_Factor_Total'\r\n    AND d.timestamputc = (\r\n        SELECT MAX(d2.timestamputc)\r\n        FROM datalog2 d2\r\n        WHERE d2.sourceid = d.sourceid\r\n          AND d2.quantityid = d.quantityid\r\n    )\r\nORDER BY s.devicename;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Power factor by device",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-YlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "amp"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 8,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "\r\nSELECT\r\n  $__timeGroup(d.timestamputc, $__interval) AS \"time\",\r\n  s.devicename                              AS \"Consumer\",\r\n  ROUND(AVG(CASE WHEN q.quantityname = 'Current_A' THEN d.value END)::numeric, 3) AS \"Phase A Current (A)\",\r\n  ROUND(AVG(CASE WHEN q.quantityname = 'Current_B' THEN d.value END)::numeric, 3) AS \"Phase B Current (A)\",\r\n  ROUND(AVG(CASE WHEN q.quantityname = 'Current_C' THEN d.value END)::numeric, 3) AS \"Phase C Current (A)\",\r\n  ROUND(AVG(CASE WHEN q.quantityname = 'Current_N' THEN d.value END)::numeric, 3) AS \"Neutral Current (A)\"\r\nFROM datalog2 d\r\nJOIN sources s    ON d.sourceid   = s.sourceid\r\nJOIN quantities q ON d.quantityid = q.quantityid\r\nWHERE\r\n  q.quantityname IN ('Current_A','Current_B','Current_C','Current_N')\r\n  AND $__timeFilter(d.timestamputc)\r\nGROUP BY 1, 2\r\nORDER BY 1, 2;\r\n\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Currents by phase",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 7,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": -45,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\r\n    date_trunc('hour', d.timestamputc) AS hour,\r\n    s.devicename,\r\n    MAX(d.value) - MIN(d.value) AS energy_consumed,\r\n    q.unit\r\nFROM datalog2 d\r\nJOIN sources s ON d.sourceid = s.sourceid\r\nJOIN quantities q ON d.quantityid = q.quantityid\r\nWHERE q.quantityname = 'Active_Energy_Delivered'\r\n  AND s.devicename IN (\r\n      'Supply Fan',\r\n      'Exhaust Fan',\r\n      'Heat Reovery Pump',\r\n      'Pump',\r\n      'Heating Valve'\r\n  )\r\nGROUP BY\r\n    hour,\r\n    s.devicename,\r\n    q.unit\r\nORDER BY\r\n    hour DESC,\r\n    s.devicename;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Energy consumption per hour",
+      "type": "barchart"
+    }
+  ],
+  "preload": false,
+  "refresh": "1m",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Power Monitoring",
+  "uid": "ad7qphk",
+  "version": 77
+}

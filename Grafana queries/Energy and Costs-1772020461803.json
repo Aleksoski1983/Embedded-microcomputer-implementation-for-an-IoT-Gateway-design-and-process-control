@@ -1,0 +1,737 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyEUR"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH prices AS (\r\n    SELECT\r\n        0.12::numeric AS price_active_energy,     -- €/kWh\r\n        0.03::numeric AS price_reactive_energy,   -- €/kVArh\r\n        5.00::numeric AS price_peak_active,       -- €/kW\r\n        3.00::numeric AS price_peak_reactive      -- €/kVAr\r\n),\r\n\r\n-- 1) DAILY ENERGY DELTAS (per quantity)\r\nenergy_daily AS (\r\n    SELECT\r\n        DATE_TRUNC('month', d.timestamputc) AS month,\r\n        DATE_TRUNC('day',   d.timestamputc) AS day,\r\n        q.quantityname,\r\n        MAX(d.value) - MIN(d.value) AS delta\r\n    FROM datalog2 d\r\n    JOIN quantities q ON q.quantityid = d.quantityid\r\n    WHERE \r\n        q.quantityname IN ('Active_Energy_Delivered','Reactive_Energy_Delivered')\r\n        AND $__timeFilter(d.timestamputc)\r\n    GROUP BY 1,2,3\r\n),\r\n\r\n-- 2) MONTHLY ENERGY COSTS\r\nmonthly_energy AS (\r\n    SELECT\r\n        month,\r\n        SUM(\r\n            CASE WHEN quantityname = 'Active_Energy_Delivered'\r\n                 THEN GREATEST(delta,0) * (SELECT price_active_energy FROM prices)\r\n                 ELSE 0 END\r\n        ) AS active_energy_cost,\r\n\r\n        SUM(\r\n            CASE WHEN quantityname = 'Reactive_Energy_Delivered'\r\n                 THEN GREATEST(delta,0) * (SELECT price_reactive_energy FROM prices)\r\n                 ELSE 0 END\r\n        ) AS reactive_energy_cost\r\n    FROM energy_daily\r\n    GROUP BY month\r\n),\r\n\r\n-- 3) PER-DEVICE MONTHLY MAX PEAK DEMAND\r\nper_device_peak AS (\r\n    SELECT\r\n        DATE_TRUNC('month', d.timestamputc) AS month,\r\n        s.devicename,\r\n        MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Active_Demand')   AS peak_active,\r\n        MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Reactive_Demand') AS peak_reactive\r\n    FROM datalog2 d\r\n    JOIN quantities q ON q.quantityid = d.quantityid\r\n    JOIN sources    s ON s.sourceid   = d.sourceid\r\n    WHERE \r\n        q.quantityname IN ('Peak_Active_Demand','Peak_Reactive_Demand')\r\n        AND $__timeFilter(d.timestamputc)\r\n    GROUP BY 1,2\r\n),\r\n\r\n-- 4) MONTHLY PEAK DEMAND COSTS\r\nmonthly_demand AS (\r\n    SELECT\r\n        month,\r\n        SUM(COALESCE(peak_active,  0)) * (SELECT price_peak_active   FROM prices) AS peak_active_cost,\r\n        SUM(COALESCE(peak_reactive,0)) * (SELECT price_peak_reactive FROM prices) AS peak_reactive_cost\r\n    FROM per_device_peak\r\n    GROUP BY month\r\n)\r\n\r\n-- 5) FINAL RESULTS WITH RENAMED LABELS\r\nSELECT\r\n    COALESCE(e.month, d.month) AS month,\r\n\r\n    ROUND(e.active_energy_cost::numeric,   2) AS \"Active Energy Cost\",\r\n    ROUND(e.reactive_energy_cost::numeric, 2) AS \"Reactive Energy Cost\",\r\n\r\n    ROUND(d.peak_active_cost::numeric,     2) AS \"Peak Active Demand Cost\",\r\n    ROUND(d.peak_reactive_cost::numeric,   2) AS \"Peak Reactive Demand Cost\",\r\n\r\n    ROUND((\r\n        COALESCE(e.active_energy_cost,0) +\r\n        COALESCE(e.reactive_energy_cost,0) +\r\n        COALESCE(d.peak_active_cost,0) +\r\n        COALESCE(d.peak_reactive_cost,0)\r\n    )::numeric, 2) AS \"Total Monthly Cost\"\r\n\r\nFROM monthly_energy e\r\nFULL JOIN monthly_demand d ON e.month = d.month\r\nORDER BY month;\r\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Current Month Energy Cost",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ff7gu4nmsz08we"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "\r\nWITH energy_data AS (\r\n    SELECT\r\n        DATE_TRUNC('day', d.timestamputc) AS day,\r\n        s.devicename AS consumer,\r\n        q.quantityname,\r\n        MAX(d.value) - MIN(d.value) AS delta_value\r\n    FROM datalog2 d\r\n    JOIN sources s      ON d.sourceid   = s.sourceid\r\n    JOIN quantities q   ON d.quantityid = q.quantityid\r\n    WHERE\r\n        q.quantityname IN ('Active_Energy_Delivered', 'Reactive_Energy_Delivered')\r\n        AND d.timestamputc BETWEEN $__timeFrom() AND $__timeTo()\r\n    GROUP BY\r\n        DATE_TRUNC('day', d.timestamputc),\r\n        s.devicename,\r\n        q.quantityname\r\n),\r\ndaily_device_cost AS (\r\n    SELECT\r\n        day,\r\n        consumer,\r\n        SUM(\r\n            CASE\r\n                WHEN quantityname = 'Active_Energy_Delivered'            THEN delta_value * 0.12\r\n                WHEN quantityname = 'Reactive_Energy_Delivered'    THEN delta_value * 0.03\r\n            END\r\n        ) AS cost\r\n    FROM energy_data\r\n    GROUP BY day, consumer\r\n),\r\ndaily_totals AS (\r\n    SELECT\r\n        day,\r\n        ROUND(SUM(cost)::numeric, 4) AS daily_total\r\n    FROM daily_device_cost\r\n    GROUP BY day\r\n)\r\nSELECT\r\n    day AS \"Day\",\r\n    daily_total AS \"Daily Cost (€)\",\r\n    SUM(daily_total) OVER (\r\n        ORDER BY day\r\n        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\r\n    ) AS \"Cumulative Cost (€)\"\r\nFROM daily_totals\r\nORDER BY day;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Daily Cost + Cumulative Cost last 24 hours",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyEUR"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Peak Reactive Demand Cost (€)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 234
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Month"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 158
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Active Energy Cost (€)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 171
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reactive Energy Cost (€)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 184
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Peak Active Demand Cost (€)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 215
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Monthly Total (€)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 159
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cumulative Billing (€)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 164
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Active Energy Cost"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 182
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reactive Energy Cost"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 167
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Peak Active Demand Cost"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 193
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Peak Reactive Demand Cost"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 206
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cumulative Billing"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 136
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 16,
+        "x": 0,
+        "y": 7
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH prices AS (\r\n    SELECT\r\n        0.12::numeric AS price_active_energy,     -- €/kWh\r\n        0.03::numeric AS price_reactive_energy,   -- €/kVArh\r\n        5.00::numeric AS price_peak_active,       -- €/kW\r\n        3.00::numeric AS price_peak_reactive      -- €/kVAr\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   1) DAILY ENERGY DELTA (Active + Reactive)\r\n   --------------------------------------------------------- */\r\nenergy_daily AS (\r\n    SELECT\r\n        DATE_TRUNC('month', d.timestamputc) AS month,\r\n        DATE_TRUNC('day',   d.timestamputc) AS day,\r\n        q.quantityname,\r\n        MAX(d.value) - MIN(d.value) AS delta\r\n    FROM datalog2 d\r\n    JOIN quantities q ON q.quantityid = d.quantityid\r\n    WHERE \r\n        q.quantityname IN ('Active_Energy_Delivered', 'Reactive_Energy_Delivered')\r\n        AND d.timestamputc BETWEEN '2026-01-01' AND '2026-02-26'\r\n    GROUP BY 1,2,3\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   2) MONTHLY ENERGY COST\r\n   --------------------------------------------------------- */\r\nmonthly_energy AS (\r\n    SELECT\r\n        month,\r\n        SUM(\r\n            CASE WHEN quantityname = 'Active_Energy_Delivered'\r\n                 THEN GREATEST(delta,0) * (SELECT price_active_energy FROM prices)\r\n                 ELSE 0 END\r\n        ) AS active_energy_cost,\r\n\r\n        SUM(\r\n            CASE WHEN quantityname = 'Reactive_Energy_Delivered'\r\n                 THEN GREATEST(delta,0) * (SELECT price_reactive_energy FROM prices)\r\n                 ELSE 0 END\r\n        ) AS reactive_energy_cost\r\n\r\n    FROM energy_daily\r\n    GROUP BY month\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   3) PER-DEVICE MONTHLY MAX DEMAND\r\n   --------------------------------------------------------- */\r\nper_device_peak AS (\r\n    SELECT\r\n        DATE_TRUNC('month', d.timestamputc) AS month,\r\n        s.devicename,\r\n        MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Active_Demand')   AS peak_active,\r\n        MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Reactive_Demand') AS peak_reactive\r\n    FROM datalog2 d\r\n    JOIN quantities q ON q.quantityid = d.quantityid\r\n    JOIN sources    s ON s.sourceid   = d.sourceid\r\n    WHERE \r\n        q.quantityname IN ('Peak_Active_Demand','Peak_Reactive_Demand')\r\n        AND d.timestamputc BETWEEN '2026-01-01' AND '2026-02-26'\r\n    GROUP BY 1,2\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   4) MONTHLY PEAK DEMAND COST (SUM DEVICES × TARIFF)\r\n   --------------------------------------------------------- */\r\nmonthly_demand AS (\r\n    SELECT\r\n        month,\r\n        SUM(COALESCE(peak_active, 0)) * (SELECT price_peak_active   FROM prices) AS peak_active_cost,\r\n        SUM(COALESCE(peak_reactive,0)) * (SELECT price_peak_reactive FROM prices) AS peak_reactive_cost\r\n    FROM per_device_peak\r\n    GROUP BY month\r\n)\r\n\r\n/* ---------------------------------------------------------\r\n   5) FINAL MONTHLY BILLING\r\n   --------------------------------------------------------- */\r\nSELECT\r\n    COALESCE(e.month, d.month) AS \"Month\",\r\n\r\n    ROUND(e.active_energy_cost::numeric,   4) AS \"Active Energy Cost\",\r\n    ROUND(e.reactive_energy_cost::numeric, 4) AS \"Reactive Energy Cost\",\r\n\r\n    ROUND(d.peak_active_cost::numeric,     4) AS \"Peak Active Demand Cost\",\r\n    ROUND(d.peak_reactive_cost::numeric,   4) AS \"Peak Reactive Demand Cost\",\r\n\r\n    ROUND((\r\n        COALESCE(e.active_energy_cost,0) +\r\n        COALESCE(e.reactive_energy_cost,0) +\r\n        COALESCE(d.peak_active_cost,0) +\r\n        COALESCE(d.peak_reactive_cost,0)\r\n    )::numeric, 4) AS \"Monthly Total (€)\",\r\n\r\n    SUM((\r\n        COALESCE(e.active_energy_cost,0) +\r\n        COALESCE(e.reactive_energy_cost,0) +\r\n        COALESCE(d.peak_active_cost,0) +\r\n        COALESCE(d.peak_reactive_cost,0)\r\n    )) OVER (ORDER BY COALESCE(e.month, d.month)) AS \"Cumulative Billing\"\r\n\r\nFROM monthly_energy e\r\nFULL JOIN monthly_demand d ON e.month = d.month\r\nORDER BY \"Month\";",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Monthly Billing Dashboard",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH per_device_monthly_max AS (\r\n  SELECT\r\n    DATE_TRUNC('month', d.timestamputc) AS month,\r\n    s.devicename,\r\n\r\n    -- Max Peak Active Demand per device\r\n    MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Active_Demand') AS peak_active,\r\n\r\n    -- Max Peak Reactive Demand per device\r\n    MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Reactive_Demand') AS peak_reactive\r\n\r\n  FROM datalog2 d\r\n  JOIN quantities q ON d.quantityid = q.quantityid\r\n  JOIN sources s    ON d.sourceid   = s.sourceid\r\n\r\n  WHERE\r\n    q.quantityname IN ('Peak_Active_Demand', 'Peak_Reactive_Demand')\r\n    AND $__timeFilter(d.timestamputc)\r\n\r\n  GROUP BY 1, 2\r\n)\r\n\r\nSELECT\r\n  month AS \"Month\",\r\n  SUM(peak_active)   AS \"Peak Active Demand\",\r\n  SUM(peak_reactive) AS \"Peak Reactive Demand\"\r\nFROM per_device_monthly_max\r\nGROUP BY month\r\nORDER BY month;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Peak Demands",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "description": "'Active_Energy_Delivered' = 0.12 \n'Reactive_Energy_Delivered' =0.03  \n 'Peak_Active_Demand' = 5.00\n 'Peak_Reactive_Demand' = 3.00",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH prices AS (\r\n    SELECT\r\n        0.12::numeric AS price_active_energy,     -- €/kWh\r\n        0.03::numeric AS price_reactive_energy,   -- €/kVArh\r\n        5.00::numeric AS price_peak_active,       -- €/kW\r\n        3.00::numeric AS price_peak_reactive      -- €/kVAr\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   1) DAILY ENERGY DELTA PER DEVICE\r\n   --------------------------------------------------------- */\r\nenergy_daily AS (\r\n    SELECT\r\n        DATE_TRUNC('month', d.timestamputc) AS month,\r\n        DATE_TRUNC('day',   d.timestamputc) AS day,\r\n        s.devicename,\r\n        q.quantityname,\r\n        MAX(d.value) - MIN(d.value) AS delta\r\n    FROM datalog2 d\r\n    JOIN quantities q ON q.quantityid = d.quantityid\r\n    JOIN sources    s ON s.sourceid   = d.sourceid\r\n    WHERE \r\n        q.quantityname IN ('Active_Energy_Delivered','Reactive_Energy_Delivered')\r\n        AND d.timestamputc BETWEEN '2026-01-01' AND '2026-02-24'\r\n    GROUP BY 1,2,3,4\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   2) MONTHLY ENERGY COST PER DEVICE\r\n   --------------------------------------------------------- */\r\nmonthly_energy AS (\r\n    SELECT\r\n        month,\r\n        devicename,\r\n        SUM(\r\n            CASE WHEN quantityname = 'Active_Energy_Delivered'\r\n                 THEN GREATEST(delta,0) * (SELECT price_active_energy FROM prices)\r\n                 ELSE 0 END\r\n        ) AS active_energy_cost,\r\n\r\n        SUM(\r\n            CASE WHEN quantityname = 'Reactive_Energy_Delivered'\r\n                 THEN GREATEST(delta,0) * (SELECT price_reactive_energy FROM prices)\r\n                 ELSE 0 END\r\n        ) AS reactive_energy_cost\r\n    FROM energy_daily\r\n    GROUP BY month, devicename\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   3) PER-DEVICE MONTHLY MAX PEAK DEMAND\r\n   --------------------------------------------------------- */\r\nper_device_peak AS (\r\n    SELECT\r\n        DATE_TRUNC('month', d.timestamputc) AS month,\r\n        s.devicename,\r\n        MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Active_Demand')   AS peak_active,\r\n        MAX(d.value) FILTER (WHERE q.quantityname = 'Peak_Reactive_Demand') AS peak_reactive\r\n    FROM datalog2 d\r\n    JOIN quantities q ON q.quantityid = d.quantityid\r\n    JOIN sources    s ON s.sourceid   = d.sourceid\r\n    WHERE \r\n        q.quantityname IN ('Peak_Active_Demand','Peak_Reactive_Demand')\r\n        AND d.timestamputc BETWEEN '2026-01-01' AND '2026-02-24'\r\n    GROUP BY 1,2\r\n),\r\n\r\n/* ---------------------------------------------------------\r\n   4) DEMAND COST PER DEVICE\r\n   --------------------------------------------------------- */\r\nmonthly_demand AS (\r\n    SELECT\r\n        month,\r\n        devicename,\r\n        (COALESCE(peak_active,0)  * (SELECT price_peak_active   FROM prices)) AS peak_active_cost,\r\n        (COALESCE(peak_reactive,0) * (SELECT price_peak_reactive FROM prices)) AS peak_reactive_cost\r\n    FROM per_device_peak\r\n)\r\n\r\n/* ---------------------------------------------------------\r\n   5) FINAL PER-DEVICE BILLING\r\n   --------------------------------------------------------- */\r\nSELECT\r\n    COALESCE(e.month, d.month) AS \"Month\",\r\n    COALESCE(e.devicename, d.devicename) AS \"Device\",\r\n\r\n    ROUND(e.active_energy_cost::numeric,   4) AS \"Active Energy Cost (€)\",\r\n    ROUND(e.reactive_energy_cost::numeric, 4) AS \"Reactive Energy Cost (€)\",\r\n    ROUND(d.peak_active_cost::numeric,     4) AS \"Peak Active Demand Cost (€)\",\r\n    ROUND(d.peak_reactive_cost::numeric,   4) AS \"Peak Reactive Demand Cost (€)\",\r\n\r\n    ROUND((\r\n        COALESCE(e.active_energy_cost,0) +\r\n        COALESCE(e.reactive_energy_cost,0) +\r\n        COALESCE(d.peak_active_cost,0) +\r\n        COALESCE(d.peak_reactive_cost,0)\r\n    )::numeric, 4) AS \"Total Device Cost (€)\"\r\n\r\nFROM monthly_energy e\r\nFULL JOIN monthly_demand d\r\n      ON e.month = d.month AND e.devicename = d.devicename\r\nORDER BY \"Month\", \"Device\";",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Daily Cost + Cumulative Cost",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ff7gu4nmsz08we"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "currencyEUR"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "dataset": "iiot_gateway",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH daily_costs AS (\r\n    SELECT\r\n        DATE_TRUNC('day', d.timestamputc) AS day,\r\n        s.devicename AS consumer,\r\n        ((MAX(d.value) - MIN(d.value)) * 0.12) AS cost\r\n    FROM datalog2 d\r\n    JOIN sources s      ON d.sourceid   = s.sourceid\r\n    JOIN quantities q   ON d.quantityid = q.quantityid\r\n    WHERE\r\n        q.quantityname = 'Active_Energy_Delivered'\r\n        AND d.timestamputc BETWEEN $__timeFrom() AND $__timeTo()\r\n    GROUP BY\r\n        DATE_TRUNC('day', d.timestamputc),\r\n        s.devicename\r\n)\r\n\r\n-- Combine all 3 granularities:\r\nSELECT\r\n    day AS period,\r\n    'Daily' AS type,\r\n    ROUND(SUM(cost)::numeric, 4) AS Active_Energy_Delivered\r\nFROM daily_costs\r\nGROUP BY day\r\n\r\nUNION ALL\r\n\r\nSELECT\r\n    DATE_TRUNC('week', day) AS period,\r\n    'Weekly' AS type,\r\n    ROUND(SUM(cost)::numeric, 4) AS total_cost\r\nFROM daily_costs\r\nGROUP BY DATE_TRUNC('week', day)\r\n\r\nUNION ALL\r\n\r\nSELECT\r\n    DATE_TRUNC('month', day) AS period,\r\n    'Monthly' AS type,\r\n    ROUND(SUM(cost)::numeric, 4) AS total_cost\r\nFROM daily_costs\r\nGROUP BY DATE_TRUNC('month', day)\r\n\r\nORDER BY period, type;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        },
+        {
+          "dataset": "iiot_gateway",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ff7gu4nmsz08we"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "WITH daily_costs AS (\r\n    SELECT\r\n        DATE_TRUNC('day', d.timestamputc) AS day,\r\n        s.devicename AS consumer,\r\n        ((MAX(d.value) - MIN(d.value)) * 0.12) AS cost\r\n    FROM datalog2 d\r\n    JOIN sources s      ON d.sourceid   = s.sourceid\r\n    JOIN quantities q   ON d.quantityid = q.quantityid\r\n    WHERE\r\n        q.quantityname = 'Reactive_Energy_Delivered'\r\n        AND d.timestamputc BETWEEN $__timeFrom() AND $__timeTo()\r\n    GROUP BY\r\n        DATE_TRUNC('day', d.timestamputc),\r\n        s.devicename\r\n)\r\n\r\n-- Combine all 3 granularities:\r\nSELECT\r\n    day AS period,\r\n    'Daily' AS type,\r\n    ROUND(SUM(cost)::numeric, 4) AS total_cost\r\nFROM daily_costs\r\nGROUP BY day\r\n\r\nUNION ALL\r\n\r\nSELECT\r\n    DATE_TRUNC('week', day) AS period,\r\n    'Weekly' AS type,\r\n    ROUND(SUM(cost)::numeric, 4) AS Reactive_Energy_Delivered\r\nFROM daily_costs\r\nGROUP BY DATE_TRUNC('week', day)\r\n\r\nUNION ALL\r\n\r\nSELECT\r\n    DATE_TRUNC('month', day) AS period,\r\n    'Monthly' AS type,\r\n    ROUND(SUM(cost)::numeric, 4) AS total_cost\r\nFROM daily_costs\r\nGROUP BY DATE_TRUNC('month', day)\r\n\r\nORDER BY period, type;",
+          "refId": "B",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Total cost in currency",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "1m",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Energy and Costs",
+  "uid": "adszjsg",
+  "version": 67
+}
